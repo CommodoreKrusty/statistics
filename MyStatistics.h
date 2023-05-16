@@ -1631,6 +1631,8 @@ template <class T, int size> double MyStatistics<T, size>::tWhereToStartCounting
 ciSquared stuff*******
 */
 
+// colExpeced & colActual are indexes
+
 template <class T, int size> bool MyStatistics<T, size>::chiSquaredTest(int colExpeced, int colActual, double alpha){
 	double df = MyData<T, size>::recordCount() - 1;
 	double c = chiSquared(colExpeced, colActual);
@@ -1643,9 +1645,6 @@ template <class T, int size> bool MyStatistics<T, size>::chiSquaredTest(int colE
 }
 
 
-/*
-*col1 are the expected values, col2 are the actual values.
-*/
 template <class T, int size> double MyStatistics<T, size>::chiSquared(int colExpeced, int colActual){
 	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
 	double p_value = 0;
@@ -1659,7 +1658,7 @@ template <class T, int size> double MyStatistics<T, size>::chiSquared(int colExp
 }
 
 template <class T, int size> double MyStatistics<T, size>::chiSquaredProbabilityDensity(double df, double x){
-	const double E = 2.71828182845904523536;
+	const double E = 2.71828182845904523536;//there's probably a better place for this.
 	double tg = tgamma(df/2);
 	double tf = (double)1/(pow(2,df/2)*tg);
 	double ts = pow(x,(df/2)-1);
