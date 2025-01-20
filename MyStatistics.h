@@ -3,11 +3,13 @@
 #include <cmath>
 #include <list>
 #include <iostream>
-#include <string>
 #include <array>
+#include <string>
 #include "MyData.h"
 
 //using namespace std;
+using std::string, 
+	std::tostring;
 
 //don't screw with these
 #define ERROR_OUT_OF_RANGE 1

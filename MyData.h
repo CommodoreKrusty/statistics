@@ -7,6 +7,7 @@
 #include <cctype>
 
 //using namespace std;
+using std::string;
 
 template <class T, int size> class newArray : public array<T, size>{
 	public:
