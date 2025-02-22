@@ -7,7 +7,7 @@
 #include <cctype>
 
 //using namespace std;
-using std::string;
+
 
 template <class T, int size> class newArray : public array<T, size>{
 	public:
@@ -33,11 +33,12 @@ template <class T, int size> class newList : public list<T>{
 		array<newList<T, size>, 2> splitList(int col);
 };
 
-template <class T, int size> array<newList<T, size>, 2> newList<T, size>::splitList(int col){
+/*template <class T, int size> array<newList<T, size>, 2> newList<T, size>::splitList(int col){
 	array<newList<T, size>, 2> a;
 	newList<T, size> l1, l2;
 	return a;
 }
+*/
 
 template <class T, int size> void newList<T, size>::mysort(int col){
 	typename newList<T, size>::iterator i = this->begin();
