@@ -8,8 +8,30 @@
 
 //using namespace std;
 
+template <typename t, size_t s> class myArray: public array<t, s>{
+    public:
+    myArray(){}
+    myArray(initializer_list<t> l){
 
-template <class T, int size> class newArray : public array<T, size>{
+        assert(l.size() == s);
+        copy(l.begin(), l.end(), this->begin());
+    }
+
+    void setColumnToSort(int col){
+        this->col_to_sort = col;
+    };
+
+    bool operator<(myArray<t, s> a){
+        if (this->at(col_to_sort) < a[col_to_sort]){
+            return true;
+        }
+        return false;
+    };
+
+    int col_to_sort;
+};
+
+/* template <class T, int size> class newArray : public array<T, size>{
 	public:
 		void setColumnToSort(int col);
 		bool operator<(newArray<T, size> a);
@@ -26,7 +48,7 @@ template <class T, int size> bool newArray<T, size>::operator<(newArray<T, size>
 template <class T, int size> void newArray<T, size>::setColumnToSort(int col){
 	this->col_to_sort = col;
 }
-
+ */
 template <class T, int size> class newList : public list<T>{
 	public:
 		void mysort(int col);
