@@ -5,12 +5,21 @@
 #include <iostream>
 #include <string>
 #include <cctype>
+#include <cassert>
 
 //using namespace std;
+ using std::string,
+	std::size_t,
+	std::array,
+	std::list,
+	std::initializer_list,
+	std::copy,
+	std::to_string,
+	std::cerr;
 
-template <typename t, size_t s> class myArray: public array<t, s>{
+/* template <typename t, size_t s> class myArray: public array<t, s>{
     public:
-    myArray(){}
+    myArray(){};
     myArray(initializer_list<t> l){
 
         assert(l.size() == s);
@@ -31,36 +40,13 @@ template <typename t, size_t s> class myArray: public array<t, s>{
     int col_to_sort;
 };
 
-/* template <class T, int size> class newArray : public array<T, size>{
-	public:
-		void setColumnToSort(int col);
-		bool operator<(newArray<T, size> a);
-		int col_to_sort;
-};
 
-template <class T, int size> bool newArray<T, size>::operator<(newArray<T, size> a){
-	if (this->at(col_to_sort) < a[col_to_sort]){
-		return true;
-	}
-	return false;
-}
-
-template <class T, int size> void newArray<T, size>::setColumnToSort(int col){
-	this->col_to_sort = col;
-}
- */
 template <class T, int size> class newList : public list<T>{
 	public:
 		void mysort(int col);
-		array<newList<T, size>, 2> splitList(int col);
+//		array<newList<T, size>, 2> splitList(int col);
 };
 
-/*template <class T, int size> array<newList<T, size>, 2> newList<T, size>::splitList(int col){
-	array<newList<T, size>, 2> a;
-	newList<T, size> l1, l2;
-	return a;
-}
-*/
 
 template <class T, int size> void newList<T, size>::mysort(int col){
 	typename newList<T, size>::iterator i = this->begin();
@@ -71,20 +57,79 @@ template <class T, int size> void newList<T, size>::mysort(int col){
 	}
 
 	this->sort();
-}
+} 
+*/
+template <typename t, size_t s> class myArray: public array<t, s>{
+	public:
+	myArray(){};
+	myArray(initializer_list<t> l){
+
+		assert(l.size() == s);
+		copy(l.begin(), l.end(), this->begin());
+	};
+
+	void setColumnToSort(int col){
+		this->col_to_sort = col;
+	};
+
+	bool operator<(myArray a){
+		if (this->at(col_to_sort) < a[col_to_sort]){
+			return true;
+		}
+		return false;
+	};
+
+	int col_to_sort;
+};
 
 
+template <typename t> class newList : public list<t>{
+	public:
+		void mysort(int col){
+			typename list<t>::iterator i = this->begin();
+			int c = 0;
+			while (i != this->end()){
+				i->setColumnToSort(col);
+				++i;
+			}
+		
+			this->sort();
+		};
+//		array<newList<T, size>, 2> splitList(int col);
+};
 
 #define LOCAL
 #ifdef LOCAL
 
-template <class T, int size> class MyData{
+template <typename t, size_t s> class MyData{
 //	private:
 //		int sort_col;
 	public:
-		int record_size = size;//number of columns
-		typedef newArray<T, size> myArray;
-		typedef newList<myArray, size> dataList;
+
+		
+		/*template <class T, int size> array<newList<T, size>, 2> newList<T, size>::splitList(int col){
+			array<newList<T, size>, 2> a;
+			newList<T, size> l1, l2;
+			return a;
+		}
+		*/
+		
+/* 		template <t, size_t> void newList<t, size_t>::mysort(int col){
+			typename newList<t, size>::iterator i = this->begin();
+			int c = 0;
+			while (i != this->end()){
+				i->setColumnToSort(col);
+				++i;
+			}
+		
+			this->sort();
+		}
+ */	
+		size_t record_size = s;//number of columns
+		typedef myArray<t, s> newArray;
+		typedef newList<newArray> dataList;
+//		typedef array<t,s> newArray;
+//		typedef list<newArray> dataList;
 		dataList data;
 //		static bool compare_val(myArray first, myArray second);
 
@@ -95,16 +140,53 @@ template <class T, int size> class MyData{
 //		typedef datalist::const_iterator const_iterator;
 		iterator begin(){return data.begin();}
 		iterator end(){return data.end();}
-		myArray front(){return data.front();}
-		myArray back(){return data.back();}
+		newArray front(){return data.front();}
+		newArray back(){return data.back();}
 
-		MyData();
-		~MyData();
+		MyData(){};
+		~MyData(){
+			while(!data.empty()){
+			//	don't know if I need to delete members of the array here. I don't think so.
+			//	myarray a = data.front();
+				data.pop_front();
+			}
+				
+		};
 //		void addRecord(int c, ...);// 
-		void addRecord(myArray a);
-		void print();
-		int recordCount();
-		void sort(int col);
+		void addRecord(newArray a){
+			data.push_back(a);
+		};
+		void print(){
+			string msg;
+			iterator i = begin();
+			int c = 0;
+			while (i != end()){
+				myArray a = *i;
+				for(typename array<t, s>::iterator b = a.begin(); b != a.end(); ++b){
+					msg += to_string(*b);
+					msg += "\t";
+				}
+				msg += '\n';
+				++c;
+				++i;
+			}
+			cerr << msg;
+		
+		};
+
+		int recordCount(){
+			return data.size();
+		};
+
+		void sort(int col){
+			try{
+				if (col >= 0 and col < s){
+					data.mysort(col);
+				}
+			}catch(int error){
+				cerr << "out of bounds" << "\n";//exceptionHandler(error);
+			}		
+		};
 		
 
 //		friend ostream& operator<<(ostream &s, MyData n)<T>;
@@ -112,11 +194,11 @@ template <class T, int size> class MyData{
 
 };
 
-template <class T, int size> MyData<T, size>::MyData(){
+/* template <class T, int size> MyData<T, size>::MyData(){
 }
+ */
 
-
-template <class T, int size> MyData<T, size>::~MyData()
+/* template <class T, int size> MyData<T, size>::~MyData()
 {
 	while(!data.empty()){
 //		don't know if I need to delete members of the array here. I don't think so.
@@ -124,11 +206,11 @@ template <class T, int size> MyData<T, size>::~MyData()
 		data.pop_front();
 	}
 }
-
-template <class T, int size> void MyData<T, size>::addRecord(myArray a){
+ */
+/* template <class T, int size> void MyData<T, size>::addRecord(newArray a){
 	data.push_back(a);
 }
-
+ */
 
 //variadic function
 /*template <typename T, int size> void MyData<T, size>::addRecord(int c, ...){
@@ -144,12 +226,12 @@ template <class T, int size> void MyData<T, size>::addRecord(myArray a){
 	addRecord(a);
 }
 */
-template <class T, int size> int MyData<T, size>::recordCount(){
+/* template <class T, int size> int MyData<T, size>::recordCount(){
 	return data.size();
 }
+ */
 
-
-template <class T, int size> void MyData<T, size>::print(){
+/* template <class T, int size> void MyData<T, size>::print(){
 //	cout << "size: " << to_string(recordCount()) << endl;
 	string msg;
 	iterator i = begin();
@@ -164,24 +246,24 @@ template <class T, int size> void MyData<T, size>::print(){
 		++c;
 		++i;
 	}
-	cout << msg;
-}
+	cerr << msg;
+} */
 
 /*template <typename T, int size> bool MyData<T, size>::compare_val(myArray first, myArray second){
 	return false;
 }*/
 
-template <class T, int size> void MyData<T, size>::sort(int col){
+/* template <class T, int size> void MyData<T, size>::sort(int col){
 //	sort_col = col;
 	try{
 		if (col >= 0 and col < size){
 			data.mysort(col);
 		}
 	}catch(int error){
-		cout << "out of bounds" << endl;//exceptionHandler(error);
+		cerr << "out of bounds" << "\n";//exceptionHandler(error);
 	}
 
-}
+} */
 
 /*template <typename T> ostream& operator<<(ostream &s, MyData n){
 	string msg;

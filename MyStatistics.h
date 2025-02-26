@@ -8,8 +8,12 @@
 #include "MyData.h"
 
 //using namespace std;
-using std::string, 
-	std::tostring;
+using std::string,
+	std::array,
+	std::map,
+	std::list,
+	std::to_string,
+	std::cerr;
 
 //don't screw with these
 #define ERROR_OUT_OF_RANGE 1
@@ -52,11 +56,11 @@ string RegressionLineEquation::getEquation(){
 /*
 * 'size' is the number of fields in a record.
 */
-template <class T, int size> class MyStatistics: public MyData<T, size>{
+template <typename T, int size> class MyStatistics: public MyData<T, size>{
 
 	public:
 		typedef array<T, size> myArray;
-		typedef newList<myArray, size> dataList;
+		typedef newList<myArray> dataList;
 		typedef typename dataList::iterator iterator;
 		iterator begin(){return this->begin();}
 		iterator end(){return this->end();}
@@ -233,7 +237,7 @@ template <class T, int size> map<T, int> MyStatistics<T, size>::colMode(int col)
 	typename map<T, int>::iterator i = section.begin();
 //	max_val = i->second;
 	while (i != section.end()){
-//		cout << i->first << " => " << i->second << endl;
+//		cerr << i->first << " => " << i->second << '\n';
 		if (i->second > max_val){
 			max_val = i->second;
 		}
@@ -250,11 +254,11 @@ template <class T, int size> map<T, int> MyStatistics<T, size>::colMode(int col)
 }
 
 template <class T, int size> void MyStatistics<T, size>::printfrequencyTable(int col){
-	cout << "col: " << col << endl;
+	cerr << "col: " << col << '\n';
 	map<T, int> section = frequencyTable(col);
 	typename map<T, int>::iterator i = section.begin();
 	while (i != section.end()){
-		cout << i->first << " => " << i->second << endl;
+		cerr << i->first << " => " << i->second << '\n';
 		++i;
 	}
 }
@@ -285,7 +289,7 @@ template <class T, int size> T MyStatistics<T, size>::colMedian(int col){
 			MyData<T, size>::sort(col);
 			int l = MyData<T, size>::recordCount() - 1;
 			int p = l%2;
-			cout << "p: " << to_string(p) << endl;
+			cerr << "p: " << to_string(p) << '\n';
 			int n = 0;
 			if (p == 0){
 				n = (int)l/2;
@@ -339,7 +343,7 @@ template <class T, int size> T MyStatistics<T, size>::IQR(int col){
 	pos1 = (count/2)/2;
 	pos2 = (count/2)+(count/4);
 	
-//	cout << "count: " << to_string(count)<< " pos1: " << to_string(pos1) << " pos2: " << to_string(pos2) << endl;
+//	cerr << "count: " << to_string(count)<< " pos1: " << to_string(pos1) << " pos2: " << to_string(pos2) << '\n';
 
 	int c = 0;
 	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
@@ -355,7 +359,7 @@ template <class T, int size> T MyStatistics<T, size>::IQR(int col){
 		++c;
 	}
 
-//	cout << "Q2: " << to_string(Q2) << " Q1: " << to_string(Q1) << endl;
+//	cerr << "Q2: " << to_string(Q2) << " Q1: " << to_string(Q1) << '\n';
 
 	return (T)(Q2-Q1);
 }
@@ -396,9 +400,9 @@ template <class T, int size> double MyStatistics<T, size>::percentile(int col, T
 		}
 		++i;
 	}
-	cout << "count: " << to_string(count) << endl;
+	cerr << "count: " << to_string(count) << '\n';
 	int rc = MyData<T, size>::recordCount();
-	cout << "recordCount: " << to_string(rc) << endl;
+	cerr << "recordCount: " << to_string(rc) << '\n';
 	double p = (double)count / (double)rc;
 	return p;
 }
@@ -558,13 +562,13 @@ template <class T, int size> double MyStatistics<T, size>::TotalSEfromMean(int c
 //Z score stuff
 
 template <class T, int size> bool MyStatistics<T, size>::zScoreTest(T Ha, T Ho, double stdev, double alpha){//, double stdev
-	cout << "here Ha:" << to_string(Ha) << " Ho: " << to_string(Ho) << endl;
+	cerr << "here Ha:" << to_string(Ha) << " Ho: " << to_string(Ho) << '\n';
 	double z = (Ha - Ho)/stdev;//(stdev/sqrt(sample_size));
 	if (z < 0){
 		z *= -1;
 	}
 
-	cout << "z: " << to_string(z) << endl;
+	cerr << "z: " << to_string(z) << '\n';
 	
 	double area = zScorePValue(z);
 
@@ -582,7 +586,7 @@ template <class T, int size> bool MyStatistics<T, size>::zScoreTest(T Ha, T Ho, 
 		z *= -1;
 	}
 
-	cout << "z: " << to_string(z) << endl;
+	cerr << "z: " << to_string(z) << '\n';
 
 	double area = zScorePValue(z);
 
@@ -611,7 +615,7 @@ template <class T, int size> bool MyStatistics<T, size>::zScore(T num, int col, 
 	if (z < 0){
 		z *= -1;
 	}
-	cout << "z: " << to_string(z) << endl;
+	cerr << "z: " << to_string(z) << '\n';
 	
 	double area = 0;
 	double dx = (double)1/pow(10, 4);
@@ -622,7 +626,7 @@ template <class T, int size> bool MyStatistics<T, size>::zScore(T num, int col, 
 		x -= dx;
 	}while(x >= z);
 
-//	cout << "area: " << to_string(area) << endl;
+//	cerr << "area: " << to_string(area) << '\n';
 	if (area < alpha){
 		return false;//reject null hypothesis
 	}else{
@@ -711,13 +715,13 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 	double df = MyData<T, size>::recordCount() - 1;
 	double t = tStatistic(col, Ha);
 	double tVal = tValue(t);
-//	cout << "t " << to_string(t) << endl;
-//	cout << "tVal: " << to_string(tVal) << endl;
+//	cerr << "t " << to_string(t) << '\n';
+//	cerr << "tVal: " << to_string(tVal) << '\n';
 	if (tVal < alpha){
-		cout << "reject Ho" << endl;
+		cerr << "reject Ho" << '\n';
 		return false;//reject null hypothesis.
 	}else{
-		cout << "fail to reject Ho" << endl;
+		cerr << "fail to reject Ho" << '\n';
 		return true;//accept null hypothesis.
 	}
 
@@ -726,10 +730,10 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 		case ONE_TAILED:
 		{
 			if (tVal < alpha){
-				cout << "reject Ho" << endl;
+				cerr << "reject Ho" << '\n';
 				return false;//reject null hypothesis.
 			}else{
-				cout << "fail to reject Ho" << endl;
+				cerr << "fail to reject Ho" << '\n';
 				return true;//accept null hypothesis.
 			}
 		}
@@ -738,7 +742,7 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 		}
 	}
 */
-//	cout << "area: " << to_string(area) << endl;
+//	cerr << "area: " << to_string(area) << '\n';
 
 	return false;
 /*
@@ -770,10 +774,10 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 			double bound = half_area * (1 - (alpha/2));
 
 			if (tVal > bound){//(upper > (1.0 - alpha)){
-				cout << " reject the NULL hypothesis" << endl;
+				cerr << " reject the NULL hypothesis" << '\n';
 				return false;
 			}
-			cout << " accept" << endl;
+			cerr << " accept" << '\n';
 			return true;
 			break;
 		}
@@ -786,27 +790,27 @@ template <class T, int size> bool MyStatistics<T, size>::tHypothesisTest(int col
 	double t = tStatistic(col, Ha);
 	bool r = tTable(t, tailed, alpha);
 	if(r){
-		cout << "fail to reject Ho" << endl;
+		cerr << "fail to reject Ho" << '\n';
 	}else{
-		cout << "reject Ho" << endl;
+		cerr << "reject Ho" << '\n';
 	}
 	return r;
 }
 
 template <class T, int size> double MyStatistics<T, size>::tStatistic(int col, double Ha){
 	double meanSample = colMean(col);
-//	cout << "meanSample: " << to_string(meanSample) << endl;
+//	cerr << "meanSample: " << to_string(meanSample) << '\n';
 
 //	double SE = meanSample/sqrt(count);
 //	double T = 0;
 //	double meanPopulation = meanSample + T*SE; 
 	double stdevSample = sandarddev(col);
-//	cout << "stdevSample: " << to_string(stdevSample) << endl;
+//	cerr << "stdevSample: " << to_string(stdevSample) << '\n';
 	int count = MyData<T, size>::recordCount();
 //	double t = (double)(meanSample - populationMean)/(stdevSample/sqrt(count));
 	
 	double t = tStatistic(meanSample, Ha, stdevSample, count);
-	cout << "t: " << to_string(t) << endl;
+	cerr << "t: " << to_string(t) << '\n';
 	return t;
 }
 
@@ -825,13 +829,13 @@ template <class T, int size> double MyStatistics<T, size>::tStatistic(double sam
 	double x = tWhereToStartCounting(df);// + 120.0
 	while(area <= 0.05){
 		area += Ttrapezoid( x, dx, df);
-//		cout << "area: " << to_string(area) << endl;
+//		cerr << "area: " << to_string(area) << '\n';
 /*		if(area == 0.05){
-			cout << "t score: " << to_string(x) << endl;
+			cerr << "t score: " << to_string(x) << '\n';
 		}*/
 /*		x -= dx;
 	}
-	cout << "t score: " << to_string(x) << endl;
+	cerr << "t score: " << to_string(x) << '\n';
 }*/
 
 /*
@@ -1695,7 +1699,7 @@ template <class T, int size> double MyStatistics<T, size>::Ctrapezoid(double t, 
 template <class T, int size> int MyStatistics<T, size>::exceptionHandler(int error){
 	switch(error){
 	case ERROR_OUT_OF_RANGE:
-		cout << "Error: " << to_string(error) << " OUT OF BOUNDS" << endl;
+		cerr << "Error: " << to_string(error) << " OUT OF BOUNDS" << '\n';
 		break;
 	}
 
@@ -1711,13 +1715,13 @@ I don't know if it's still useful.
 * This is where the switch statement in halfAreaUnderTDistribution() came from.
 */
 template <class T, int size> void MyStatistics<T, size>::areaForAllCurves(){
-	cout << "\tswitch(df){" << endl;
+	cerr << "\tswitch(df){" << '\n';
 	for (int x = 1; x <= 30; x++){
 		double area = halfTotalAreaUnderCurve(x);
-		cout << "\tcase " << to_string(x) << ":" << endl;
-		cout << "\t\treturn " << to_string(area) << ";" << endl;
+		cerr << "\tcase " << to_string(x) << ":" << '\n';
+		cerr << "\t\treturn " << to_string(area) << ";" << '\n';
 	}
-	cout << "\t}" << endl;
+	cerr << "\t}" << '\n';
 }
 
 /*
