@@ -1,18 +1,22 @@
 #include <stdarg.h>
 #include <map>
-#include <cmath>
 #include <list>
-#include <iostream>
 #include <array>
+#include <cmath>
+#include <iostream>
+#include <cassert>
 #include <string>
-#include "MyData.h"
+#include <algorithm>
+//#include "MyData.h"
 
 //using namespace std;
 using std::string,
 	std::array,
 	std::map,
 	std::list,
+	std::initializer_list,
 	std::to_string,
+    std::copy,
 	std::cerr;
 
 //don't screw with these
@@ -56,19 +60,82 @@ string RegressionLineEquation::getEquation(){
 /*
 * 'size' is the number of fields in a record.
 */
-template <typename T, int size> class MyStatistics: public MyData<T, size>{
+template <typename T, int size> class MyStatistics{//: public MyArray
 
 	public:
-		typedef array<T, size> myArray;
-		typedef newList<myArray> dataList;
+		MyStatistics();
+		~MyStatistics();
+/*		typedef array<T, size> MyArray;
+		typedef newList<MyArray> dataList;
 		typedef typename dataList::iterator iterator;
 		iterator begin(){return this->begin();}
 		iterator end(){return this->end();}
+*/
+		int col_to_sort;
 
-		MyStatistics();
-		~MyStatistics();
+		void setColumnToSort(int col){
+			this->col_to_sort = col;
+		};
+	
+		typedef array<T, size> MyArray;
+		typedef list<MyArray> datalist;
+
+		datalist data;
+
+		typename datalist::iterator begin(){return data.begin();}
+		typename datalist::iterator end(){return data.end();}
+		MyArray front(){return data.front();}
+		MyArray back(){return data.back();}
+
+/*		MyArray(initializer_list<T> l){
+
+			assert(l.size() == size);
+			copy(l.begin(), l.end(), this->begin());
+		};
+*/	
+		void addRecord(initializer_list<T> l){
+			assert(l.size() == size);
+			MyArray m;
+			copy(l.begin(), l.end(), m.begin());
+			data.push_back(m);
+		}
+
+
+		void addRecord(MyArray a){
+			data.push_back(a);
+		};
+		
+		bool operator<(MyArray a){
+			if (data.at(col_to_sort) < a[col_to_sort]){
+				return true;
+			}
+			return false;
+		};
+	
+		void print(){
+			string msg;
+			typename datalist::iterator i = begin();
+			int c = 0;
+			while (i != end()){
+				MyArray a = *i;
+				for(typename MyArray::iterator b = a.begin(); b != a.end(); ++b){
+					msg += to_string(*b);
+					msg += "\t";
+				}
+				msg += '\n';
+				++c;
+				++i;
+			}
+			cerr << msg;
+		};
+
+		int recordCount(){
+			return data.size();
+		};
+
+
 		int exceptionHandler(int error);
-		myArray totalColumns(); 
+		array<T, size> totalColumns(); 
 		T totalColumn(int col);
 		double colMean(int col);
 		T colMedian(int col);
@@ -169,9 +236,9 @@ template <class T, int size> T MyStatistics<T, size>::totalColumn(int col){
 	T t = (T)0;
 	try{
 		if (col >= 0 and col < size){
-			typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-			while (i != MyData<T, size>::end()){
-				myArray m = *i;
+			typename datalist::iterator i = begin();
+			while (i != end()){
+				MyArray m = *i;
 				t += m.at(col);
 				++i;
 			}
@@ -202,10 +269,10 @@ template <class T, int size> double MyStatistics<T, size>::colMean(int col){
 }
 
 template <class T, int size> double MyStatistics<T, size>::meanofSquared(int col){
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
+	typename datalist::iterator i = begin();
 	double t = 0.0;
-	while (i != MyData<T, size>::end()){
-		myArray m = *i;
+	while (i != end()){
+		MyArray m = *i;
 		double n = (double)m.at(col);
 		double p = pow(n, 2);
 		t += p;
@@ -216,10 +283,10 @@ template <class T, int size> double MyStatistics<T, size>::meanofSquared(int col
 }
 /*
 template <class T, int size> double MyStatistics<T, size>::meanofSquared(int col){
-	typename list<myArray>::iterator i = this->begin();
+	typename list<MyArray>::iterator i = this->begin();
 	double t = 0.0;
 	while (i != this->end()){
-		myArray m = *i;
+		MyArray m = *i;
 		double n = (double)m.at(col);
 		double p = pow(n, 2);
 		t += p;
@@ -265,9 +332,9 @@ template <class T, int size> void MyStatistics<T, size>::printfrequencyTable(int
 
 template <class T, int size> newMap<T, int> MyStatistics<T, size>::frequencyTable(int col, bool group){
 	newMap<T, int> section;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray m = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray m = *i;
 		T t = m[col];
 		typename map<T, int>::iterator si = section.find(t);
 		if (si != section.end()){
@@ -286,8 +353,8 @@ template <class T, int size> T MyStatistics<T, size>::colMedian(int col){
 	T median = 0;
 	try{
 		if (col >= 0 and col < size){
-			MyData<T, size>::sort(col);
-			int l = MyData<T, size>::recordCount() - 1;
+			data.sort(col);
+			int l = recordCount() - 1;
 			int p = l%2;
 			cerr << "p: " << to_string(p) << '\n';
 			int n = 0;
@@ -296,13 +363,13 @@ template <class T, int size> T MyStatistics<T, size>::colMedian(int col){
 			}else{
 				n = (l+1)/2;
 			}
-			typename MyData<T, size>::iterator i = MyData<T, size>::begin();
+			typename datalist::iterator i = begin();
 			int c = 0;
-			while (c < n && i != MyData<T, size>::end()){
+			while (c < n && i != end()){
 				++c;
 				++i;
 			}
-			myArray t = *i;
+			MyArray t = *i;
 		 	median = t[col];
 		}else{
 			throw ERROR_OUT_OF_RANGE;//return -1;//error. Maybe throw exception?
@@ -318,10 +385,10 @@ template <class T, int size> T MyStatistics<T, size>::colMedian(int col){
 //The highest value in a column minus the lowest value
 template <class T, int size> T MyStatistics<T, size>::colRange(int col){
 	T mode = (T)0;
-	MyData<T, size>::sort(col);
-	myArray t = MyData<T, size>::front();
+	data.sort(col);
+	MyArray t = front();
 	T v = t[col];
-	t = MyData<T, size>::back();
+	t = back();
 	T w = t[col];
 	return (T)(w - v);
 }
@@ -335,24 +402,24 @@ template <class T, int size> T MyStatistics<T, size>::colMidrange(int col){
 
 //Interquartile Range
 template <class T, int size> T MyStatistics<T, size>::IQR(int col){
-	MyData<T, size>::sort(col);
+	data.sort(col);
 	T Q1, Q2;
 	int pos1, pos2;
 
-	int count = MyData<T, size>::recordCount();
+	int count = recordCount();
 	pos1 = (count/2)/2;
 	pos2 = (count/2)+(count/4);
 	
 //	cerr << "count: " << to_string(count)<< " pos1: " << to_string(pos1) << " pos2: " << to_string(pos2) << '\n';
 
 	int c = 0;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
+	typename datalist::iterator i = begin();
+	while (i != end()){
 		if(c == pos1){
-			myArray t = *i;
+			MyArray t = *i;
 		 	Q1 = t[col];
 		}else if (c == pos2){
-			myArray t = *i;
+			MyArray t = *i;
 		 	Q2 = t[col];
 		}
 		++i;
@@ -376,24 +443,24 @@ template <class T, int size> double MyStatistics<T, size>::variance(int col, int
 	}
 	double a = 0;
 	double m = colMean(col);
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray l = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray l = *i;
 		a += pow((double)l[col] - m, 2);
 		++i;
 	}
 	
-	int count = MyData<T, size>::recordCount() - sample;
+	int count = recordCount() - sample;
 	a /= count;
 	return a;
 }
 
 template <class T, int size> double MyStatistics<T, size>::percentile(int col, T num){
-	MyData<T, size>::sort(col);
+	MyArray::sort(col);
 	int count = 0;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray l = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray l = *i;
 //		T t = l[col];
 		if (l[col] < num){
 			count += 1;
@@ -401,7 +468,7 @@ template <class T, int size> double MyStatistics<T, size>::percentile(int col, T
 		++i;
 	}
 	cerr << "count: " << to_string(count) << '\n';
-	int rc = MyData<T, size>::recordCount();
+	int rc = recordCount();
 	cerr << "recordCount: " << to_string(rc) << '\n';
 	double p = (double)count / (double)rc;
 	return p;
@@ -410,9 +477,9 @@ template <class T, int size> double MyStatistics<T, size>::percentile(int col, T
 template <class T, int size> double MyStatistics<T, size>::MAD(int col){
 	double total = 0;
 	double m = colMean(col);
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray l = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray l = *i;
 		T t = l[col] - m;
 		if (t < 0){
 			t *= -1;
@@ -420,7 +487,7 @@ template <class T, int size> double MyStatistics<T, size>::MAD(int col){
 		total += (double) t;
 		++i;
 	}
-	double t = (double)total/(double)MyData<T, size>::recordCount();
+	double t = (double)total/(double)recordCount();
 	return t;
 }
 
@@ -430,11 +497,11 @@ template <class T, int size> double MyStatistics<T, size>::CorrelationCoefficien
 	double mean2 = colMean(col2);
 	double stdev2 = sandarddev(col2);
 
-	double coef = (double)1/((double)MyData<T, size>::recordCount() - 1.0);
+	double coef = (double)1/((double)recordCount() - 1.0);
 	int temp = 0;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray l = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray l = *i;
 		T a = l[col1] - mean1;
 		T b = l[col2] - mean2;
 		double t = (double)(a * b);
@@ -467,9 +534,9 @@ template <class T, int size> RegressionLineEquation MyStatistics<T, size>::LineO
 template <class T, int size> list<array<double,2>> MyStatistics<T, size>::residuals(int col1, int col2){
 	list<array<double,2>> l;
 	RegressionLineEquation r = LineOfRegression();
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray temp = *i;
 		array<double, 2> a = {(double)temp[col1], (double)(temp[col2] - (r.getSlope()*temp[col2]) + r.getYIntercept())};
 		l.push_back(a);
 		++i;
@@ -495,24 +562,24 @@ template <class T, int size> RegressionLineEquation MyStatistics<T, size>::squar
 
 template <class T, int size> double MyStatistics<T, size>::meanXY(int colX, int colY){
 	double total = 0.0;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray temp = *i;
 		total += temp[colX] * temp[colY];
 		++i;
 	}
-	return total/(double)MyData<T, size>::recordCount();
+	return total/(double)recordCount();
 }
 
 template <class T, int size> double MyStatistics<T, size>::meanOfColumnSquared(int col){
 	double total = 0.0;
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray temp = *i;
 		total += pow(temp[col],2);
 		++i;
 	}
-	return total / (double)MyData<T, size>::recordCount();
+	return total / (double)recordCount();
 }
 //END Squared Error
 
@@ -528,9 +595,9 @@ template <class T, int size> double MyStatistics<T, size>::RSquared(int colX, in
 template <class T, int size> double MyStatistics<T, size>::TotalSEwithLine(int colX, int colY){
 	double total = 0.0;
 	RegressionLineEquation r = squaredErrorofLineofRegression(colX, colY);
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray temp = *i;
 		//actual Y
 		T y = temp[colY];
 		//expected Y
@@ -547,9 +614,9 @@ template <class T, int size> double MyStatistics<T, size>::TotalSEwithLine(int c
 template <class T, int size> double MyStatistics<T, size>::TotalSEfromMean(int col){
 	double total = 0.0;
 	double meanCol = colMean(col);
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	typename datalist::iterator i = begin();
+	while (i != end()){
+		MyArray temp = *i;
 		T y = temp[col];
 		double t = (double)y - meanCol;
 		total += pow(t, 2.0);
@@ -712,7 +779,7 @@ template <class T, int size> double MyStatistics<T, size>::zTotScore(double z){
 //t statistic stuff for sample size < 30
 
 template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double Ha, int tailed, double alpha){
-	double df = MyData<T, size>::recordCount() - 1;
+	double df = recordCount() - 1;
 	double t = tStatistic(col, Ha);
 	double tVal = tValue(t);
 //	cerr << "t " << to_string(t) << '\n';
@@ -746,7 +813,7 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 
 	return false;
 /*
-	double df = MyData<T, size>::recordCount() - 1;
+	double df = recordCount() - 1;
 	double t = tStatistic(col, populationMean);
 	double tVal = tValue(t);
 	double half_area = 0.5;//halfAreaUnderTDistribution(df);
@@ -770,7 +837,7 @@ template <class T, int size> bool MyStatistics<T, size>::tTest(int col, double H
 		{
 //		double t = tStatistic(col, populationMean);
 //		double tVal = tValue(t);
-//		double df = MyData<T, size>::recordCount() - 1;
+//		double df = recordCount() - 1;
 			double bound = half_area * (1 - (alpha/2));
 
 			if (tVal > bound){//(upper > (1.0 - alpha)){
@@ -806,7 +873,7 @@ template <class T, int size> double MyStatistics<T, size>::tStatistic(int col, d
 //	double meanPopulation = meanSample + T*SE; 
 	double stdevSample = sandarddev(col);
 //	cerr << "stdevSample: " << to_string(stdevSample) << '\n';
-	int count = MyData<T, size>::recordCount();
+	int count = recordCount();
 //	double t = (double)(meanSample - populationMean)/(stdevSample/sqrt(count));
 	
 	double t = tStatistic(meanSample, Ha, stdevSample, count);
@@ -823,7 +890,7 @@ template <class T, int size> double MyStatistics<T, size>::tStatistic(double sam
 }*/
 
 /*template <class T, int size> void MyStatistics<T, size>::tValueTest(double t, double alpha){
-	double df = 1;//MyData<T, size>::recordCount() - 1;
+	double df = 1;//recordCount() - 1;
 	double area = 0.0;
 	double dx = (double)1/pow(10, 5);
 	double x = tWhereToStartCounting(df);// + 120.0
@@ -842,7 +909,7 @@ template <class T, int size> double MyStatistics<T, size>::tStatistic(double sam
 * tStat is output from tStatistic();
 */
 template <class T, int size> double MyStatistics<T, size>::tValue(double tStat){
-	double df = MyData<T, size>::recordCount() - 1;
+	double df = recordCount() - 1;
 	double area = 0.0;
 	double dx = (double)1/pow(10, 4);//if you want dx to be smaller make 4 larger, but it will be slower.
 	double x = tWhereToStartCounting(df);
@@ -855,7 +922,7 @@ template <class T, int size> double MyStatistics<T, size>::tValue(double tStat){
 
 /*
 template <class T, int size> double MyStatistics<T, size>::tValue(double tStat){
-	double df = MyData<T, size>::recordCount() - 1;
+	double df = recordCount() - 1;
 	double area = 0;
 	double dx = (double)1/pow(10, 4);
 	double n = 0.0;
@@ -879,7 +946,7 @@ template <class T, int size> double MyStatistics<T, size>::Ttrapezoid(double t, 
 template <class T, int size> double MyStatistics<T, size>::ProbabilityDistributionFormula(double t, int df){
 	const double pi = 3.14159265358979323846;
 	//v - degrees of freedom
-	double v = (double)df;//MyData<T, size>::recordCount() - 1;//
+	double v = (double)df;//recordCount() - 1;//
 	double g = tgamma((v + 1.0)/2.0);
 	double d = sqrt(v * pi)*tgamma(v/2.0);
 	double c = 1.0 + pow(t,2)/v;
@@ -892,7 +959,7 @@ template <class T, int size> double MyStatistics<T, size>::ProbabilityDistributi
 template <class T, int size> bool MyStatistics<T, size>::tTable(double t, int tailed, double alpha){
 //#define ONE_TAILED 0
 //#define TWO_TAILED 1
-	int df = MyData<T, size>::recordCount() - 1;
+	int df = recordCount() - 1;
 
 	if (alpha == 0.05){
 		switch(df){
@@ -1640,7 +1707,7 @@ ciSquared stuff*******
 // colExpeced & colActual are indexes
 
 template <class T, int size> bool MyStatistics<T, size>::chiSquaredTest(int colExpeced, int colActual, double alpha){
-	double df = MyData<T, size>::recordCount() - 1;
+	double df = recordCount() - 1;
 	double c = chiSquared(colExpeced, colActual);
 	double area = chiSquaredIntegral(c, df);
 	if (area >= alpha){
@@ -1652,10 +1719,10 @@ template <class T, int size> bool MyStatistics<T, size>::chiSquaredTest(int colE
 
 
 template <class T, int size> double MyStatistics<T, size>::chiSquared(int colExpeced, int colActual){
-	typename MyData<T, size>::iterator i = MyData<T, size>::begin();
+	typename datalist::iterator i = begin();
 	double p_value = 0;
-	while (i != MyData<T, size>::end()){
-		myArray temp = *i;
+	while (i != end()){
+		MyArray temp = *i;
 		p_value += (double)pow(temp[colActual] - temp[colExpeced], 2)/temp[colExpeced];
 		++i;
 	}
