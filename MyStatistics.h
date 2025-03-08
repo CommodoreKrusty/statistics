@@ -119,8 +119,13 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 			while (i != end()){
 				MyArray a = *i;
 				for(typename MyArray::iterator b = a.begin(); b != a.end(); ++b){
-					msg += to_string(*b);
+					char buffer[10];
+//					msg += to_string(*b);
+//					msg += "\t";
+					sprintf(buffer,"%0.2g\t",*b);
+					msg += buffer;
 					msg += "\t";
+
 				}
 				msg += '\n';
 				++c;
@@ -220,6 +225,9 @@ template <class T, int size> MyStatistics<T, size>::MyStatistics(){
 
 template <class T, int size> MyStatistics<T, size>::~MyStatistics()
 {
+	if(data.size() > 0){
+//		data.empty();
+	}
 }
 
 template <class T, int size> array<T, size> MyStatistics<T, size>::totalColumns(){
