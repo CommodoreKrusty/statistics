@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <map>
 #include <list>
+#include <vector>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -14,6 +15,7 @@ using std::string,
 	std::array,
 	std::map,
 	std::list,
+	std::vector,
 	std::initializer_list,
 	std::to_string,
     std::copy,
@@ -31,16 +33,29 @@ using std::string,
 template < class Key, class T> class newMap : public map< Key, T>{
 };
 
+
 class RegressionLineEquation{
 	double mx, bx;
 	public:
-		RegressionLineEquation(double m, double b);
-		string getEquation();
+		RegressionLineEquation(double m, double b):mx(m),bx(b){}
+//		string getEquation();
+		string getEquation(){
+			string msg;
+			if (bx < 0){
+				msg = "y = " + to_string(mx) + "x - " + to_string(bx*(-1));
+			}else if(bx > 0){
+				msg = "y = " + to_string(mx) + "x + " + to_string(bx);
+			}else{
+				msg = "y = "+ to_string(mx) + "x"; 
+			}
+			return msg;
+		}
+
 		double getYIntercept(){return bx;}
 		double getSlope(){return mx;}
 };
 
-RegressionLineEquation::RegressionLineEquation(double m, double b){
+/*RegressionLineEquation::RegressionLineEquation(double m, double b){
 	mx = m;
 	bx = b;
 }
@@ -56,7 +71,7 @@ string RegressionLineEquation::getEquation(){
 	}
 	return msg;
 }
-
+*/
 /*
 * 'size' is the number of fields in a record.
 */
@@ -66,27 +81,169 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 		MyStatistics();
 		~MyStatistics();
 /*		typedef array<T, size> MyArray;
-		typedef newList<MyArray> dataList;
-		typedef typename dataList::iterator iterator;
+		typedef newList<MyArray> datavector;
+		typedef typename datavector::iterator iterator;
 		iterator begin(){return this->begin();}
 		iterator end(){return this->end();}
 */
-		int col_to_sort;
+	int col_to_sort;
+	
+typedef array<T, size> MyArray;
+
+//
+
+template <class T> class sortvector : public vector <T>{
+    private:
+        MyArray sortindex;
+    public:
+        sortvector(){
+            int i = 0;
+            MyArray::iterator it = sortindex.begin();
+            while(it != sortindex.end()){
+                *it = i;
+                advance(it, 1);
+                i++;
+            }
+
+        };
+        void sort(int idx = 0){
+            assert(idx < this->sortindex.size());
+            quickSort(0, this->size() - 1, idx);
+        }
+
+        int count(int idx, int start){
+            int count = 0;
+            int i = this->at(start)[sortindex[idx]];
+            while(start < this->size() && i == this->at(start)[sortindex[idx]]){
+                count++;
+                start++;
+            }
+
+            return count;
+        }
+
+        void multisort(initializer_list<int> l){
+            int i = 0;
+            initializer_list<int>::iterator it = l.begin();
+            while(it != l.end()){
+                this->sortindex.at(i) = *it;
+                advance(it, 1);
+                i++;
+            }
+            i = 0;
+            sort(this->sortindex[i]);
+
+            i++;
+            int prev = 0;
+            while(i < this->sortindex.size()){
+                int start = 0;
+                while(start < this->size()){
+                    int c = count(i - 1, start);
+                    int finish = start + c - 1;
+                    quickSort(start, finish, this->sortindex[i]);
+                    start += c;
+                }
+                i++;
+            }
+        }
+
+    private:
+        void swap (int i, int j){
+            MyArray c;
+            c = this->at(j);
+            this->at(j) = this->at(i);
+            this->at(i) = c;
+        }
+        
+        int partition(int low, int high, int idx = 0){
+          
+            double pivot = this->at(high)[idx];
+            int i = (low - 1);
+          
+            for(int j = low; j <= high; j++){
+                if(this->at(j)[idx] < pivot){
+                    i++;
+                    swap( i, j);
+                }
+            }
+            swap(i + 1, high);
+            return ( i + 1);
+        }
+        void quickSort(int low, int high, int idx = 0){
+            if(low < high){     
+                int pi = partition(low,high, idx);
+                quickSort(low, pi-1, idx);
+                quickSort(pi+1, high, idx);
+            }
+        }
+};
+
+/*
+template <class l> class sortvector : public vector <l>{
+    public:
+        sortvector(){}
+
+		void multisort(array<int, size> sortindex){
+
+		}
+
+        void sort(){
+            quickSort(this, 0, this->size() - 1);
+        }
+
+    private:
+        void swap (sortvector* a, int i, int j){
+            MyArray c;
+            c = a->at(j);
+            a->at(j) = a->at(i);
+            a->at(i) = c;
+        }
+        
+        int partition(sortvector* arr, int low, int high){
+          
+            double pivot = arr->at(high)[0];
+            int i = (low - 1);
+          
+            for(int j = low; j <= high; j++){
+                if(arr->at(j)[0] < pivot){
+                    i++;
+                    swap( arr, i, j);
+                }
+            }
+            swap(arr, i + 1, high);
+            return ( i + 1);
+        }
+        void quickSort(sortvector* arr, int low, int high){
+            if(low < high){     
+                int pi = partition(arr,low,high);
+                quickSort(arr, low, pi-1);
+                quickSort(arr, pi+1, high);
+            }
+        }
+};
+*/
+//
 
 		void setColumnToSort(int col){
 			this->col_to_sort = col;
 		};
 	
-		typedef array<T, size> MyArray;
-		typedef list<MyArray> datalist;
+		typedef MyStatistics<T, size>::sortvector<MyArray> datavector;
 
-		datalist data;
+		datavector data;
 
-		typename datalist::iterator begin(){return data.begin();}
-		typename datalist::iterator end(){return data.end();}
+		void sort(){ data.sort();}
+
+		typename datavector::iterator begin(){return data.begin();}
+		typename datavector::iterator end(){return data.end();}
 		MyArray front(){return data.front();}
 		MyArray back(){return data.back();}
 
+/*		bool sort(){
+ 			cerr << "here\n";
+			data.sort();
+			return false;
+		}*/
 /*		MyArray(initializer_list<T> l){
 
 			assert(l.size() == size);
@@ -106,7 +263,9 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 		};
 		
 		bool operator<(MyArray a){
-			if (data.at(col_to_sort) < a[col_to_sort]){
+//			if (data.at(col_to_sort) < a[col_to_sort]){
+			cerr << "data.at(col_to_sort) : " << a.at(col_to_sort) << "\n";
+			if (data.at(col_to_sort) < a.at(col_to_sort)){
 				return true;
 			}
 			return false;
@@ -114,7 +273,7 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 	
 		void print(){
 			string msg;
-			typename datalist::iterator i = begin();
+			typename datavector::iterator i = begin();
 			int c = 0;
 			while (i != end()){
 				MyArray a = *i;
@@ -122,7 +281,8 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 					char buffer[10];
 //					msg += to_string(*b);
 //					msg += "\t";
-					sprintf(buffer,"%0.2g\t",*b);
+//					sprintf(buffer,"%0.2g\t",*b);
+					sprintf(buffer,"%i\t",*b);
 					msg += buffer;
 					msg += "\t";
 
@@ -221,6 +381,7 @@ template <typename T, int size> class MyStatistics{//: public MyArray
 
 template <class T, int size> MyStatistics<T, size>::MyStatistics(){
 //	this->addRecord({97,36,43,22,76});//I don't know why 'this->' is necessary. It wouldn't be if it wasn't a template.
+	this->col_to_sort = 0;
 }
 
 template <class T, int size> MyStatistics<T, size>::~MyStatistics()
@@ -244,7 +405,7 @@ template <class T, int size> T MyStatistics<T, size>::totalColumn(int col){
 	T t = (T)0;
 	try{
 		if (col >= 0 and col < size){
-			typename datalist::iterator i = begin();
+			typename datavector::iterator i = begin();
 			while (i != end()){
 				MyArray m = *i;
 				t += m.at(col);
@@ -277,7 +438,7 @@ template <class T, int size> double MyStatistics<T, size>::colMean(int col){
 }
 
 template <class T, int size> double MyStatistics<T, size>::meanofSquared(int col){
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	double t = 0.0;
 	while (i != end()){
 		MyArray m = *i;
@@ -340,7 +501,7 @@ template <class T, int size> void MyStatistics<T, size>::printfrequencyTable(int
 
 template <class T, int size> newMap<T, int> MyStatistics<T, size>::frequencyTable(int col, bool group){
 	newMap<T, int> section;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray m = *i;
 		T t = m[col];
@@ -371,7 +532,7 @@ template <class T, int size> T MyStatistics<T, size>::colMedian(int col){
 			}else{
 				n = (l+1)/2;
 			}
-			typename datalist::iterator i = begin();
+			typename datavector::iterator i = begin();
 			int c = 0;
 			while (c < n && i != end()){
 				++c;
@@ -421,7 +582,7 @@ template <class T, int size> T MyStatistics<T, size>::IQR(int col){
 //	cerr << "count: " << to_string(count)<< " pos1: " << to_string(pos1) << " pos2: " << to_string(pos2) << '\n';
 
 	int c = 0;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		if(c == pos1){
 			MyArray t = *i;
@@ -451,7 +612,7 @@ template <class T, int size> double MyStatistics<T, size>::variance(int col, int
 	}
 	double a = 0;
 	double m = colMean(col);
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray l = *i;
 		a += pow((double)l[col] - m, 2);
@@ -466,7 +627,7 @@ template <class T, int size> double MyStatistics<T, size>::variance(int col, int
 template <class T, int size> double MyStatistics<T, size>::percentile(int col, T num){
 	MyArray::sort(col);
 	int count = 0;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray l = *i;
 //		T t = l[col];
@@ -485,7 +646,7 @@ template <class T, int size> double MyStatistics<T, size>::percentile(int col, T
 template <class T, int size> double MyStatistics<T, size>::MAD(int col){
 	double total = 0;
 	double m = colMean(col);
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray l = *i;
 		T t = l[col] - m;
@@ -507,7 +668,7 @@ template <class T, int size> double MyStatistics<T, size>::CorrelationCoefficien
 
 	double coef = (double)1/((double)recordCount() - 1.0);
 	int temp = 0;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray l = *i;
 		T a = l[col1] - mean1;
@@ -542,7 +703,7 @@ template <class T, int size> RegressionLineEquation MyStatistics<T, size>::LineO
 template <class T, int size> list<array<double,2>> MyStatistics<T, size>::residuals(int col1, int col2){
 	list<array<double,2>> l;
 	RegressionLineEquation r = LineOfRegression();
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray temp = *i;
 		array<double, 2> a = {(double)temp[col1], (double)(temp[col2] - (r.getSlope()*temp[col2]) + r.getYIntercept())};
@@ -570,7 +731,7 @@ template <class T, int size> RegressionLineEquation MyStatistics<T, size>::squar
 
 template <class T, int size> double MyStatistics<T, size>::meanXY(int colX, int colY){
 	double total = 0.0;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray temp = *i;
 		total += temp[colX] * temp[colY];
@@ -581,7 +742,7 @@ template <class T, int size> double MyStatistics<T, size>::meanXY(int colX, int 
 
 template <class T, int size> double MyStatistics<T, size>::meanOfColumnSquared(int col){
 	double total = 0.0;
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray temp = *i;
 		total += pow(temp[col],2);
@@ -603,7 +764,7 @@ template <class T, int size> double MyStatistics<T, size>::RSquared(int colX, in
 template <class T, int size> double MyStatistics<T, size>::TotalSEwithLine(int colX, int colY){
 	double total = 0.0;
 	RegressionLineEquation r = squaredErrorofLineofRegression(colX, colY);
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray temp = *i;
 		//actual Y
@@ -622,7 +783,7 @@ template <class T, int size> double MyStatistics<T, size>::TotalSEwithLine(int c
 template <class T, int size> double MyStatistics<T, size>::TotalSEfromMean(int col){
 	double total = 0.0;
 	double meanCol = colMean(col);
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	while (i != end()){
 		MyArray temp = *i;
 		T y = temp[col];
@@ -1727,7 +1888,7 @@ template <class T, int size> bool MyStatistics<T, size>::chiSquaredTest(int colE
 
 
 template <class T, int size> double MyStatistics<T, size>::chiSquared(int colExpeced, int colActual){
-	typename datalist::iterator i = begin();
+	typename datavector::iterator i = begin();
 	double p_value = 0;
 	while (i != end()){
 		MyArray temp = *i;
