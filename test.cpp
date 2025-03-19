@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include "/home/paul/Documents/c++/statistics/MyStatistics.h"
 
-using std::mt19937, std::div, std::div_t, std::list, std::for_each, ::cerr;
+using std::mt19937, std::div, std::div_t, std::list, std::for_each, std::advance, std::cerr;
 
 template < class Key, int T> class SuperMyStatistics : public MyStatistics< Key, T>{
     public:
@@ -14,9 +14,10 @@ template < class Key, int T> class SuperMyStatistics : public MyStatistics< Key,
     ~SuperMyStatistics(){
 //        this->data.empty();
     }
+
 };
 
-typedef SuperMyStatistics<double, 2> dataset;
+typedef SuperMyStatistics<int, 2> dataset;
 typedef list<dataset> datasets;
 
 void FillDataSet(mt19937 rnd, dataset* s);
@@ -31,20 +32,34 @@ int main(){
     auto print = [](dataset v){
         v.print();
     };
+    s.multisort({0, 1});
+    print(s);
+//    for_each(mydata.begin(), mydata.end(), print);
 
-    for_each(mydata.begin(), mydata.end(), print);
+/*    datasets::iterator i = mydata.begin();
+    while(i != mydata.end()){
+        i->sort();
+        advance(i, 1);
+    }
+*/
+//    for_each(mydata.begin(), mydata.end(), print);
+
     return 0;
 }
 
 void FillDataSet(mt19937 rnd, dataset* s){
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < 50; i++){
         dataset::MyArray j;
 
-        div_t a = div(rnd() % 100 + 1, 10);
-        div_t b = div(rnd() % 100 + 1, 10);
-        
-        j[0] = (double) a.quot + (double)a.rem / 10;
-        j[1] = (double) b.quot + (double)b.rem / 10;
+//        div_t a = div(rnd() % 100 + 1, 10);
+//        div_t b = div(rnd() % 100 + 1, 10);
+        unsigned long a = rnd() % 10 + 1;
+        unsigned long b = rnd() % 10 + 1;
+
+//        j[0] = (double) a.quot + (double)a.rem / 10;
+//        j[1] = (double) b.quot + (double)b.rem / 10;
+        j[0] = a;
+        j[1] = b;
 
         s->addRecord(j);
     }
