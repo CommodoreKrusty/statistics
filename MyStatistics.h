@@ -8,9 +8,7 @@
 #include <cassert>
 #include <string>
 #include <algorithm>
-//#include "MyData.h"
 
-//using namespace std;
 using std::string,
 	std::array,
 	std::map,
@@ -75,7 +73,7 @@ string RegressionLineEquation::getEquation(){
 /*
 * 'size' is the number of fields in a record.
 */
-template <typename T, int size> class MyStatistics{//: public MyArray
+template <class T, int size> class MyStatistics{//: public MyArray
 
 	public:
 		MyStatistics();
@@ -92,16 +90,17 @@ typedef array<T, size> MyArray;
 
 //
 
-template <class T> class sortvector : public vector <T>{
+template <class S> class sortvector : public vector <S>{
     private:
         MyArray sortindex;
     public:
         sortvector(){
             int i = 0;
-            MyArray::iterator it = sortindex.begin();
+            typename MyArray::iterator it = sortindex.begin();
             while(it != sortindex.end()){
                 *it = i;
-                advance(it, 1);
+//                advance(it, 1);//I don't know why this doesn't work
+				it++;
                 i++;
             }
 
@@ -127,7 +126,8 @@ template <class T> class sortvector : public vector <T>{
             initializer_list<int>::iterator it = l.begin();
             while(it != l.end()){
                 this->sortindex.at(i) = *it;
-                advance(it, 1);
+//                advance(it, 1);//I don't know why this doesn't work
+				it++;
                 i++;
             }
             i = 0;
@@ -229,10 +229,14 @@ template <class l> class sortvector : public vector <l>{
 		};
 	
 		typedef MyStatistics<T, size>::sortvector<MyArray> datavector;
+//		typename sortvector<MyArray> datavector;
 
 		datavector data;
 
 		void sort(){ data.sort();}
+		void multisort(initializer_list<int> l){
+			data.multisort(l);
+		}
 
 		typename datavector::iterator begin(){return data.begin();}
 		typename datavector::iterator end(){return data.end();}
